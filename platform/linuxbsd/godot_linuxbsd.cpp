@@ -41,6 +41,9 @@
 #include <sys/resource.h>
 #endif
 
+#include "main/main.h"
+#include "os_linuxbsd.h"
+
 int main(int argc, char *argv[]) {
 #if defined(SANITIZERS_ENABLED)
 	// Note: Set stack size to be at least 30 MB (vs 8 MB default) to avoid overflow, address sanitizer can increase stack usage up to 3 times.
