@@ -38,7 +38,7 @@ uint32_t (*lib_godot_callable_hash)(void *);
 void *(*lib_godot_get_as_text)(void *);
 void *(*lib_godot_get_object)(void *);
 void (*lib_godot_disposes)(void *);
-void (*lib_godot_call)(const void *, int, void *, void *);
+void (*lib_godot_call)(void *, const void *, int, void *, void *);
 
 
 #ifdef __cplusplus
@@ -49,7 +49,7 @@ GDExtensionBool (*initialization_function)(const GDExtensionInterface *, GDExten
 void (*scene_load_function)(void *);
 void (*project_settings_load_function)(void *);
 
-LIBGODOT_API void libgodot_bind_custom_callable(uint32_t (*callable_hash_bind)(void *), void *(*get_as_text_bind)(void *), void *(*get_object_bind)(void *), void (*disposes_bind)(void *), void (*call_bind)(const void *, int, void *, void *)) {
+LIBGODOT_API void libgodot_bind_custom_callable(uint32_t (*callable_hash_bind)(void *), void *(*get_as_text_bind)(void *), void *(*get_object_bind)(void *), void (*disposes_bind)(void *), void (*call_bind)(void *, const void *, int, void *, void *)) {
 	lib_godot_callable_hash = callable_hash_bind;
 	lib_godot_get_as_text = get_as_text_bind;
 	lib_godot_get_object = get_object_bind;
@@ -147,7 +147,7 @@ CallableCustom::CompareLessFunc LibGodotCallable::get_compare_less_func() const 
 void LibGodotCallable::call(const Variant **p_arguments, int p_argcount, Variant &r_return_value, Callable::CallError &r_call_error) const {
 	Callable::CallError callar = {};
 	Variant return_value = {};
-	lib_godot_call(static_cast<const void *>(p_arguments), p_argcount, (void *)&return_value, (void *)&callar);
+	lib_godot_call(customObject, static_cast<const void *>(p_arguments), p_argcount, (void *)&return_value, (void *)&callar);
 	r_return_value = return_value;
 	r_call_error = callar;
 }
