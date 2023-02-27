@@ -545,8 +545,10 @@ Error Main::test_setup() {
 	initialize_modules(MODULE_INITIALIZATION_LEVEL_CORE);
 	register_core_extensions();
 
+	register_core_starting_singletons();
 	register_core_singletons();
-
+	
+	ClassDB::set_current_api(ClassDB::API_SERVERS);
 	/** INITIALIZE SERVERS **/
 	register_server_types();
 	XRServer::set_xr_mode(XRServer::XRMODE_OFF); // Skip in tests.
@@ -562,6 +564,7 @@ Error Main::test_setup() {
 
 	ResourceLoader::load_path_remaps();
 
+	ClassDB::set_current_api(ClassDB::API_SCENE);
 	register_scene_types();
 	register_driver_types();
 
@@ -1538,6 +1541,7 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 	register_core_extensions(); // core extensions must be registered after globals setup and before display
 
 	ResourceUID::get_singleton()->load_from_cache(); // load UUIDs from cache.
+	register_core_starting_singletons();
 
 #ifdef LIBRARY_ENABLED
 	libgodot_project_settings_load(ProjectSettings::get_singleton());
@@ -2128,6 +2132,8 @@ Error Main::setup2() {
 	physics_server_3d_manager = memnew(PhysicsServer3DManager);
 	physics_server_2d_manager = memnew(PhysicsServer2DManager);
 
+	ClassDB::set_current_api(ClassDB::API_SERVERS);
+
 	register_server_types();
 	initialize_modules(MODULE_INITIALIZATION_LEVEL_SERVERS);
 	GDExtensionManager::get_singleton()->initialize_extensions(GDExtension::INITIALIZATION_LEVEL_SERVERS);
@@ -2520,6 +2526,7 @@ Error Main::setup2() {
 
 	OS::get_singleton()->benchmark_begin_measure("scene");
 
+	ClassDB::set_current_api(ClassDB::API_SCENE);
 	register_scene_types();
 	register_driver_types();
 
