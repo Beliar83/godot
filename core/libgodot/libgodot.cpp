@@ -36,7 +36,7 @@
 
 uint32_t (*lib_godot_callable_hash)(void *);
 void *(*lib_godot_get_as_text)(void *);
-void *(*lib_godot_get_object)(void *);
+uint64_t (*lib_godot_get_object)(void *);
 void (*lib_godot_disposes)(void *);
 void (*lib_godot_call)(void *, const void *, int, void *, void *);
 
@@ -49,7 +49,7 @@ GDExtensionBool (*initialization_function)(const GDExtensionInterface *, GDExten
 void (*scene_load_function)(void *);
 void (*project_settings_load_function)(void *);
 
-LIBGODOT_API void libgodot_bind_custom_callable(uint32_t (*callable_hash_bind)(void *), void *(*get_as_text_bind)(void *), void *(*get_object_bind)(void *), void (*disposes_bind)(void *), void (*call_bind)(void *, const void *, int, void *, void *)) {
+LIBGODOT_API void libgodot_bind_custom_callable(uint32_t (*callable_hash_bind)(void *), void *(*get_as_text_bind)(void *), uint64_t (*get_object_bind)(void *), void (*disposes_bind)(void *), void (*call_bind)(void *, const void *, int, void *, void *)) {
 	lib_godot_callable_hash = callable_hash_bind;
 	lib_godot_get_as_text = get_as_text_bind;
 	lib_godot_get_object = get_object_bind;
@@ -125,7 +125,7 @@ String LibGodotCallable::get_as_text() const {
 }
 
 ObjectID LibGodotCallable::get_object() const {
-	return *(ObjectID *)lib_godot_get_object(customObject);
+	return (ObjectID)lib_godot_get_object(customObject);
 }
 
 LibGodotCallable::LibGodotCallable(void *target) {
