@@ -43,6 +43,7 @@ namespace Godot.SourceGenerators
                         // Ignore inner classes
                         .Where(cds => !cds.IsNested())
                         .SelectGodotScriptClasses(context.Compilation)
+                        .Where(x => x.symbol.IsGeneratorEnabled("ScriptPathAttribute"))
                         // Report and skip non-partial classes
                         .Where(x =>
                         {

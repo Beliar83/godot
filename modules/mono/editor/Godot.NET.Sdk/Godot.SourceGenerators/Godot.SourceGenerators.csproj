@@ -3,15 +3,16 @@
     <TargetFramework>netstandard2.0</TargetFramework>
     <LangVersion>9.0</LangVersion>
     <Nullable>enable</Nullable>
+    <AssemblyName>Godot.FSharp.SourceGenerators.CSharp</AssemblyName>
   </PropertyGroup>
   <PropertyGroup>
-    <Description>Core C# source generator for Godot projects.</Description>
-    <Authors>Godot Engine contributors</Authors>
+    <Description>Core C# source generator for Godot projects for usage in fsharp projects.</Description>
+    <Authors>Godot Engine contributors + Beliar83 for the fsharp modifications</Authors>
 
     <PackageId>Godot.SourceGenerators</PackageId>
     <Version>4.1.0</Version>
     <PackageVersion>$(PackageVersion_Godot_SourceGenerators)</PackageVersion>
-    <RepositoryUrl>https://github.com/godotengine/godot/tree/master/modules/mono/editor/Godot.NET.Sdk/Godot.SourceGenerators</RepositoryUrl>
+    <RepositoryUrl>https://github.com/Beliar83/godot/tree/dotnet-generator-selective-disable-attribute/modules/mono/editor/Godot.NET.Sdk/Godot.SourceGenerators</RepositoryUrl>
     <PackageProjectUrl>$(RepositoryUrl)</PackageProjectUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
 

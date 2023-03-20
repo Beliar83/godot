@@ -12,5 +12,6 @@ namespace Godot.SourceGenerators
         public const string MustBeVariantAttr = "Godot.MustBeVariantAttribute";
         public const string GodotClassNameAttr = "Godot.GodotClassNameAttribute";
         public const string SystemFlagsAttr = "System.FlagsAttribute";
+        public const string DisableGeneratorsAttribute = "Godot.DisableGeneratorsAttribute";
     }
 }

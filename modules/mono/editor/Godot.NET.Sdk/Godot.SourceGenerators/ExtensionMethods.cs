@@ -75,6 +75,17 @@ namespace Godot.SourceGenerators
             return godotClassName ?? nativeType.Name;
         }
 
+        public static bool IsGeneratorEnabled(this INamedTypeSymbol typeSymbol, string generator)
+        {
+            AttributeData? attribute = typeSymbol.GetAttributes()
+                .FirstOrDefault(x => x.AttributeClass?.IsDisableGeneratorsAttributeAttribute() ?? false);
+
+            if (attribute is null) return true;
+
+            return attribute.ConstructorArguments.Length > 0 &&
+                   attribute.ConstructorArguments[0].Values.All(x => !x.Value!.Equals(generator));
+        }
+
         private static bool IsGodotScriptClass(
             this ClassDeclarationSyntax cds, Compilation compilation,
             out INamedTypeSymbol? symbol
@@ -237,6 +248,9 @@ namespace Godot.SourceGenerators
 
         public static bool IsSystemFlagsAttribute(this INamedTypeSymbol symbol)
             => symbol.ToString() == GodotClasses.SystemFlagsAttr;
+
+        public static bool IsDisableGeneratorsAttributeAttribute(this INamedTypeSymbol symbol)
+            => symbol.ToString() == GodotClasses.DisableGeneratorsAttribute;
 
         public static GodotMethodData? HasGodotCompatibleSignature(
             this IMethodSymbol method,

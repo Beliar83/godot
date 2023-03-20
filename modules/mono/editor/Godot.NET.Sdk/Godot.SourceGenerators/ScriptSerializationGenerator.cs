@@ -25,6 +25,7 @@ namespace Godot.SourceGenerators
                     tree.GetRoot().DescendantNodes()
                         .OfType<ClassDeclarationSyntax>()
                         .SelectGodotScriptClasses(context.Compilation)
+                        .Where(x => x.symbol.IsGeneratorEnabled("ScriptSerialization"))
                         // Report and skip non-partial classes
                         .Where(x =>
                         {
