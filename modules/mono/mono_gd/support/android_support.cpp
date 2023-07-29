@@ -31,11 +31,11 @@
 #include "android_support.h"
 
 #if defined(ANDROID_ENABLED)
-
+#ifndef LIBRARY_ENABLED
 #include "../../utils/path_utils.h"
 #include "../../utils/string_utils.h"
 #include "../gd_mono_cache.h"
-#include "../gd_mono_marshal.h"
+//#include "../gd_mono_marshal.h"
 
 #include "core/os/os.h"
 #include "core/string/ustring.h"
@@ -44,7 +44,7 @@
 #include "os_android.h"
 #include "thread_jandroid.h"
 
-#include <mono/utils/mono-dl-fallback.h>
+//#include <mono/utils/mono-dl-fallback.h>
 
 #include <dlfcn.h> // dlopen, dlsym
 #include <sys/system_properties.h>
@@ -716,5 +716,5 @@ GD_PINVOKE_EXPORT int32_t _monodroid_getifaddrs(struct ifaddrs **p_ifap) {
 GD_PINVOKE_EXPORT void _monodroid_freeifaddrs(struct ifaddrs *p_ifap) {
 	freeifaddrs(p_ifap);
 }
-
-#endif
+#endif // LIBRARY_ENABLED
+#endif // ANDROID_ENABLED

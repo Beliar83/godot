@@ -592,11 +592,15 @@ MethodBind *ClassDB::get_method_with_compatibility(const StringName &p_class, co
 			if (r_method_exists) {
 				*r_method_exists = true;
 			}
+#ifdef LIBRARY_ENABLED
+			return *method;
+#else
 			if ((*method)->get_hash() == p_hash) {
 				return *method;
 			}
+#endif
 		}
-
+#ifndef LIBRARY_ENABLED
 		LocalVector<MethodBind *> *compat = type->method_map_compatibility.getptr(p_name);
 		if (compat) {
 			if (r_method_exists) {
@@ -612,6 +616,7 @@ MethodBind *ClassDB::get_method_with_compatibility(const StringName &p_class, co
 			}
 		}
 		type = type->inherits_ptr;
+#endif
 	}
 	return nullptr;
 }

@@ -40,6 +40,12 @@ Ref<ResourceFormatSaverCSharpScript> resource_saver_cs;
 
 mono_bind::GodotSharp *_godotsharp = nullptr;
 
+void initialize_csharp_language() {
+	script_language_cs = memnew(CSharpLanguage);
+	script_language_cs->set_language_index(ScriptServer::get_language_count());
+	ScriptServer::register_language(script_language_cs);
+}
+
 void initialize_mono_module(ModuleInitializationLevel p_level) {
 	if (p_level != MODULE_INITIALIZATION_LEVEL_SCENE) {
 		return;
@@ -52,10 +58,9 @@ void initialize_mono_module(ModuleInitializationLevel p_level) {
 	GDREGISTER_CLASS(mono_bind::GodotSharp);
 	Engine::get_singleton()->add_singleton(Engine::Singleton("GodotSharp", mono_bind::GodotSharp::get_singleton()));
 
-	script_language_cs = memnew(CSharpLanguage);
-	script_language_cs->set_language_index(ScriptServer::get_language_count());
-	ScriptServer::register_language(script_language_cs);
-
+#ifndef LIBRARY_ENABLED
+	initialize_language();
+#endif
 	resource_loader_cs.instantiate();
 	ResourceLoader::add_resource_format_loader(resource_loader_cs);
 

@@ -31,7 +31,7 @@
 #include "ios_support.h"
 
 #if defined(IOS_ENABLED)
-
+#ifndef LIBRARY_ENABLED
 #include "../gd_mono_marshal.h"
 
 #include "core/ustring.h"
@@ -148,3 +148,4 @@ GD_PINVOKE_EXPORT void xamarin_start_wwan(const char *p_uri) {
 }
 
 #endif // IOS_ENABLED
+#endif // LIBRARY_ENABLED

@@ -108,6 +108,9 @@
 
 #ifdef LIBRARY_ENABLED
 #include "core/libgodot/libgodot.h"
+#ifdef MODULE_MONO_ENABLED
+#include "modules/mono/register_types.h"
+#endif
 #endif
 
 #include "modules/modules_enabled.gen.h" // For mono.
@@ -547,7 +550,7 @@ Error Main::test_setup() {
 
 	register_core_starting_singletons();
 	register_core_singletons();
-	
+
 	ClassDB::set_current_api(ClassDB::API_SERVERS);
 	/** INITIALIZE SERVERS **/
 	register_server_types();
@@ -1534,21 +1537,20 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 		}
 	}
 
-	// Initialize user data dir.
-	OS::get_singleton()->ensure_user_data_dir();
-
 	initialize_modules(MODULE_INITIALIZATION_LEVEL_CORE);
 	register_core_starting_singletons();
 	register_core_extensions(); // core extensions must be registered after globals setup and before display
 	ClassDB::set_current_api(ClassDB::API_SERVERS);
 
 #ifdef LIBRARY_ENABLED
-	libgodot_project_settings_load(ProjectSettings::get_singleton());
+#ifdef MODULE_MONO_ENABLED
+	initialize_csharp_language();
+#endif
+	libgodot_project_settings_load(new Variant(ProjectSettings::get_singleton()));
 
+#endif
 	// Initialize user data dir.
 	OS::get_singleton()->ensure_user_data_dir();
-#endif
-
 	ResourceUID::get_singleton()->load_from_cache(); // load UUIDs from cache.
 
 	if (ProjectSettings::get_singleton()->has_custom_feature("dedicated_server")) {
@@ -2578,6 +2580,10 @@ Error Main::setup2() {
 	// This loads global classes, so it must happen before custom loaders and savers are registered
 	ScriptServer::init_languages();
 
+#if defined(MODULE_MONO_ENABLED) && defined(LIBRARY_ENABLED)
+	libgodot_init_mono();
+#endif
+
 	theme_db->initialize_theme();
 	audio_server->load_default_bus_layout();
 
@@ -3096,7 +3102,7 @@ bool Main::start() {
 			}
 #ifdef LIBRARY_ENABLED
 			else {
-				libgodot_scene_load((void *)sml);
+				libgodot_scene_load(new Variant(sml));
 			}
 #endif
 		}

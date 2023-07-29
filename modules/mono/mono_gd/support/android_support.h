@@ -31,8 +31,8 @@
 #ifndef ANDROID_SUPPORT_H
 #define ANDROID_SUPPORT_H
 
-#if defined(ANDROID_ENABLED)
-
+#if defined(ANDROID_ENABLED_)
+#ifndef LIBRARY_ENABLED
 #include "core/string/ustring.h"
 
 namespace gdmono {
@@ -49,6 +49,6 @@ void register_internal_calls();
 } // namespace android
 } // namespace gdmono
 
+#endif // LIBRARY_ENABLED
 #endif // ANDROID_ENABLED
-
 #endif // ANDROID_SUPPORT_H

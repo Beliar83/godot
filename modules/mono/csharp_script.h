@@ -418,6 +418,11 @@ public:
 	void init() override;
 	void finish() override;
 
+#ifdef LIBRARY_ENABLED
+	void setup_mono(GDMono *p_gdMono);
+#else
+	void setup_mono();
+#endif
 	void finalize();
 
 	/* EDITOR FUNCTIONS */

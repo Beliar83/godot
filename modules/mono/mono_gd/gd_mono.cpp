@@ -65,6 +65,7 @@
 GDMono *GDMono::singleton = nullptr;
 
 namespace {
+#ifndef LIBRARY_ENABLED
 hostfxr_initialize_for_dotnet_command_line_fn hostfxr_initialize_for_dotnet_command_line = nullptr;
 hostfxr_initialize_for_runtime_config_fn hostfxr_initialize_for_runtime_config = nullptr;
 hostfxr_get_runtime_delegate_fn hostfxr_get_runtime_delegate = nullptr;
@@ -151,6 +152,7 @@ String find_hostfxr() {
 #endif
 }
 
+#ifndef LIBRARY_ENABLED
 bool load_hostfxr(void *&r_hostfxr_dll_handle) {
 	String hostfxr_path = find_hostfxr();
 
@@ -190,6 +192,7 @@ bool load_hostfxr(void *&r_hostfxr_dll_handle) {
 			hostfxr_get_runtime_delegate &&
 			hostfxr_close);
 }
+#endif
 
 #ifdef TOOLS_ENABLED
 load_assembly_and_get_function_pointer_fn initialize_hostfxr_for_config(const char_t *p_config_path) {
@@ -250,12 +253,6 @@ load_assembly_and_get_function_pointer_fn initialize_hostfxr_self_contained(
 
 	return (load_assembly_and_get_function_pointer_fn)load_assembly_and_get_function_pointer;
 }
-#endif
-
-#ifdef TOOLS_ENABLED
-using godot_plugins_initialize_fn = bool (*)(void *, bool, gdmono::PluginCallbacks *, GDMonoCache::ManagedCallbacks *, const void **, int32_t);
-#else
-using godot_plugins_initialize_fn = bool (*)(void *, GDMonoCache::ManagedCallbacks *, const void **, int32_t);
 #endif
 
 #ifdef TOOLS_ENABLED
@@ -350,7 +347,8 @@ godot_plugins_initialize_fn try_load_native_aot_library(void *&r_aot_dll_handle)
 
 	return nullptr;
 }
-#endif
+#endif //TOOLS_ENABLED
+#endif //LIBRARY_ENABLED
 
 } // namespace
 
@@ -370,12 +368,15 @@ static bool _on_core_api_assembly_loaded() {
 
 	return true;
 }
-
+#if !defined(LIBRARY_ENABLED)
 void GDMono::initialize() {
 	print_verbose(".NET: Initializing module...");
+#else
+void GDMono::initialize(godot_plugins_initialize_fn godot_plugins_initialize) {
+#endif
 
 	_init_godot_api_hashes();
-
+#if !defined(LIBRARY_ENABLED)
 	godot_plugins_initialize_fn godot_plugins_initialize = nullptr;
 
 	if (!load_hostfxr(hostfxr_dll_handle)) {
@@ -399,7 +400,7 @@ void GDMono::initialize() {
 		godot_plugins_initialize = initialize_hostfxr_and_godot_plugins(runtime_initialized);
 		ERR_FAIL_NULL(godot_plugins_initialize);
 	}
-
+#endif
 	int32_t interop_funcs_size = 0;
 	const void **interop_funcs = godotsharp::get_runtime_interop_funcs(interop_funcs_size);
 
@@ -412,10 +413,12 @@ void GDMono::initialize() {
 	godot_dll_handle = dlopen(nullptr, RTLD_NOW);
 #endif
 
-#ifdef TOOLS_ENABLED
+#if defined(TOOLS_ENABLED)
 	gdmono::PluginCallbacks plugin_callbacks_res;
 	bool init_ok = godot_plugins_initialize(godot_dll_handle,
+#ifndef LIBRARY_ENABLED
 			Engine::get_singleton()->is_editor_hint(),
+#endif
 			&plugin_callbacks_res, &managed_callbacks,
 			interop_funcs, interop_funcs_size);
 	ERR_FAIL_COND_MSG(!init_ok, ".NET: GodotPlugins initialization failed");
@@ -429,14 +432,15 @@ void GDMono::initialize() {
 
 	GDMonoCache::update_godot_api_cache(managed_callbacks);
 
+#if !defined(LIBRARY_ENABLED)
 	print_verbose(".NET: GodotPlugins initialized");
-
+#endif
 	_on_core_api_assembly_loaded();
 
 	initialized = true;
 }
 
-#ifdef TOOLS_ENABLED
+#if defined(TOOLS_ENABLED)
 void GDMono::initialize_load_assemblies() {
 	if (Engine::get_singleton()->is_project_manager_hint()) {
 		return;
@@ -445,6 +449,13 @@ void GDMono::initialize_load_assemblies() {
 	// Load the project's main assembly. This doesn't necessarily need to succeed.
 	// The game may not be using .NET at all, or if the project does use .NET and
 	// we're running in the editor, it may just happen to be it wasn't built yet.
+#ifdef LIBRARY_ENABLED
+	if (!plugin_callbacks.LoadScriptAssembliesCallback()) {
+		if (OS::get_singleton()->is_stdout_verbose()) {
+			print_error(".NET: Failed to load script assemblies");
+		}
+	}
+#else
 	if (!_load_project_assembly()) {
 		if (OS::get_singleton()->is_stdout_verbose()) {
 			print_error(".NET: Failed to load project assembly");
@@ -452,7 +463,8 @@ void GDMono::initialize_load_assemblies() {
 	}
 }
 #endif
-
+}
+#endif
 void GDMono::_init_godot_api_hashes() {
 #ifdef DEBUG_METHODS_ENABLED
 	get_api_core_hash();
@@ -463,7 +475,7 @@ void GDMono::_init_godot_api_hashes() {
 #endif // DEBUG_METHODS_ENABLED
 }
 
-#ifdef TOOLS_ENABLED
+#if defined(TOOLS_ENABLED) && !defined(LIBRARY_ENABLED)
 bool GDMono::_load_project_assembly() {
 	String assembly_name = path::get_csharp_project_name();
 
@@ -487,7 +499,7 @@ bool GDMono::_load_project_assembly() {
 }
 #endif
 
-#ifdef GD_MONO_HOT_RELOAD
+#if defined(GD_MONO_HOT_RELOAD)
 void GDMono::reload_failure() {
 	if (++project_load_failure_count >= (int)GLOBAL_GET("dotnet/project/assembly_reload_attempts")) {
 		// After reloading a project has failed n times in a row, update the path and modification time
@@ -495,12 +507,13 @@ void GDMono::reload_failure() {
 		project_load_failure_count = 0;
 
 		ERR_PRINT_ED(".NET: Giving up on assembly reloading. Please restart the editor if unloading was failing.");
-
+#ifndef LIBRARY_ENABLED
 		String assembly_name = path::get_csharp_project_name();
 		String assembly_path = GodotSharpDirs::get_res_temp_assemblies_dir().path_join(assembly_name + ".dll");
 		assembly_path = ProjectSettings::get_singleton()->globalize_path(assembly_path);
 		project_assembly_path = assembly_path.simplify_path();
 		project_assembly_modified_time = FileAccess::get_modified_time(assembly_path);
+#endif
 	}
 }
 
@@ -508,8 +521,11 @@ Error GDMono::reload_project_assemblies() {
 	ERR_FAIL_COND_V(!runtime_initialized, ERR_BUG);
 
 	finalizing_scripts_domain = true;
-
+#ifdef LIBRARY_ENABLED
+	if (!get_plugin_callbacks().UnloadScriptAssembliesPluginCallback()) {
+#else
 	if (!get_plugin_callbacks().UnloadProjectPluginCallback()) {
+#endif
 		ERR_PRINT_ED(".NET: Failed to unload assemblies. Please check https://github.com/godotengine/godot/issues/78513 for more information.");
 		reload_failure();
 		return FAILED;
@@ -519,12 +535,19 @@ Error GDMono::reload_project_assemblies() {
 
 	// Load the project's main assembly. Here, during hot-reloading, we do
 	// consider failing to load the project's main assembly to be an error.
+#ifdef TOOLS_ENABLED
+	if (!get_plugin_callbacks().LoadScriptAssembliesCallback()) {
+		ERR_PRINT_ED(".NET: Failed to load script assemblies.");
+		reload_failure();
+		return ERR_CANT_OPEN;
+	}
+#elif not defined(LIBRARY_ENABLED)
 	if (!_load_project_assembly()) {
 		ERR_PRINT_ED(".NET: Failed to load project assembly.");
 		reload_failure();
 		return ERR_CANT_OPEN;
 	}
-
+#endif
 	if (project_load_failure_count > 0) {
 		project_load_failure_count = 0;
 		ERR_PRINT_ED(".NET: Assembly reloading succeeded after failures.");
@@ -546,16 +569,18 @@ GDMono::~GDMono() {
 			GDMonoCache::managed_callbacks.DisposablesTracker_OnGodotShuttingDown();
 		}
 	}
-
+#ifndef LIBRARY_ENABLED
 	if (hostfxr_dll_handle) {
 		OS::get_singleton()->close_dynamic_library(hostfxr_dll_handle);
 	}
-
+#endif
 	finalizing_scripts_domain = false;
 	runtime_initialized = false;
 
 #if defined(ANDROID_ENABLED)
+#ifndef LIBRARY_ENABLED
 	gdmono::android::support::cleanup();
+#endif
 #endif
 
 	singleton = nullptr;

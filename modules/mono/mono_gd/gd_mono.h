@@ -45,42 +45,67 @@
 
 namespace gdmono {
 
-#ifdef TOOLS_ENABLED
+#if defined(TOOLS_ENABLED)
 struct PluginCallbacks {
+#ifdef LIBRARY_ENABLED
+	using FuncLoadScriptAssembliesCallback = bool(GD_CLR_STDCALL *)();
+	using FuncGetEditorPluginCallback = Object *(GD_CLR_STDCALL *)(const void **, int32_t);
+	using FuncUnloadScriptAssembliesPluginCallback = bool(GD_CLR_STDCALL *)();
+	FuncLoadScriptAssembliesCallback LoadScriptAssembliesCallback = nullptr;
+	FuncGetEditorPluginCallback GetEditorPluginCallback = nullptr;
+	FuncUnloadScriptAssembliesPluginCallback UnloadScriptAssembliesPluginCallback = nullptr;
+#else
 	using FuncLoadProjectAssemblyCallback = bool(GD_CLR_STDCALL *)(const char16_t *, String *);
 	using FuncLoadToolsAssemblyCallback = Object *(GD_CLR_STDCALL *)(const char16_t *, const void **, int32_t);
 	using FuncUnloadProjectPluginCallback = bool(GD_CLR_STDCALL *)();
 	FuncLoadProjectAssemblyCallback LoadProjectAssemblyCallback = nullptr;
 	FuncLoadToolsAssemblyCallback LoadToolsAssemblyCallback = nullptr;
 	FuncUnloadProjectPluginCallback UnloadProjectPluginCallback = nullptr;
+#endif
 };
 #endif
-
 } // namespace gdmono
+namespace GDMonoCache {
+struct ManagedCallbacks;
+}
+
+#if defined(TOOLS_ENABLED)
+#ifdef LIBRARY_ENABLED
+using godot_plugins_initialize_fn = bool (*)(void *, gdmono::PluginCallbacks *, GDMonoCache::ManagedCallbacks *, const void **, int32_t);
+#else
+using godot_plugins_initialize_fn = bool (*)(void *, bool, gdmono::PluginCallbacks *, GDMonoCache::ManagedCallbacks *, const void **, int32_t);
+#endif
+#else
+using godot_plugins_initialize_fn = bool (*)(void *, GDMonoCache::ManagedCallbacks *, const void **, int32_t);
+#endif
 
 class GDMono {
 	bool initialized = false;
 	bool runtime_initialized = false;
 	bool finalizing_scripts_domain = false;
 
+#ifndef LIBRARY_ENABLED
 	void *hostfxr_dll_handle = nullptr;
 	bool is_native_aot = false;
-
 	String project_assembly_path;
 	uint64_t project_assembly_modified_time = 0;
+#endif
+#ifdef DEBUG_METHODS_ENABLED
+	uint64_t api_core_hash = 0;
+#endif
+#if defined(GD_MONO_HOT_RELOAD)
 	int project_load_failure_count = 0;
-
-#ifdef TOOLS_ENABLED
+#endif
+#if defined(TOOLS_ENABLED) && !defined(LIBRARY_ENABLED)
 	bool _load_project_assembly();
 #endif
 
-	uint64_t api_core_hash = 0;
 #ifdef TOOLS_ENABLED
 	uint64_t api_editor_hash = 0;
 #endif
 	void _init_godot_api_hashes();
 
-#ifdef TOOLS_ENABLED
+#if defined(TOOLS_ENABLED)
 	gdmono::PluginCallbacks plugin_callbacks;
 #endif
 
@@ -131,26 +156,31 @@ public:
 		return finalizing_scripts_domain;
 	}
 
+#ifndef LIBRARY_ENABLED
 	_FORCE_INLINE_ const String &get_project_assembly_path() const {
 		return project_assembly_path;
 	}
 	_FORCE_INLINE_ uint64_t get_project_assembly_modified_time() const {
 		return project_assembly_modified_time;
 	}
+#endif
 
-#ifdef TOOLS_ENABLED
+#if defined(TOOLS_ENABLED)
 	const gdmono::PluginCallbacks &get_plugin_callbacks() {
 		return plugin_callbacks;
 	}
 #endif
 
-#ifdef GD_MONO_HOT_RELOAD
+#if defined(GD_MONO_HOT_RELOAD)
 	void reload_failure();
 	Error reload_project_assemblies();
 #endif
-
+#ifndef LIBRARY_ENABLED
 	void initialize();
-#ifdef TOOLS_ENABLED
+#else
+	void initialize(godot_plugins_initialize_fn godot_plugins_initialize);
+#endif
+#if defined(TOOLS_ENABLED)
 	void initialize_load_assemblies();
 #endif
 

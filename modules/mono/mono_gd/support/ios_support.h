@@ -32,7 +32,7 @@
 #define IOS_SUPPORT_H
 
 #if defined(IOS_ENABLED)
-
+#ifndef LIBRARY_ENABLED
 #include "core/string/ustring.h"
 
 namespace gdmono {
@@ -46,5 +46,6 @@ void cleanup();
 } // namespace gdmono
 
 #endif // IOS_ENABLED
+#endif // LIBRARY_ENABLED
 
 #endif // IOS_SUPPORT_H

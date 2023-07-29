@@ -123,16 +123,27 @@ void CSharpLanguage::init() {
 	GLOBAL_DEF(PropertyInfo(Variant::INT, "dotnet/project/assembly_reload_attempts", PROPERTY_HINT_RANGE, "1,16,1,or_greater"), 3);
 #endif
 
+#ifndef LIBRARY_ENABLED
+	setup_mono();
+#endif
+#ifdef TOOLS_ENABLED
+	EditorNode::add_init_callback(&_editor_init_callback);
+#endif
+}
+
+#ifdef LIBRARY_ENABLED
+void CSharpLanguage::setup_mono(GDMono *p_gdMono) {
+	gdmono = p_gdMono;
+#else
+void CSharpLanguage::setup_mono() {
 	gdmono = memnew(GDMono);
 	gdmono->initialize();
-
+#endif
 #ifdef TOOLS_ENABLED
 	if (gdmono->is_runtime_initialized()) {
 		gdmono->initialize_load_assemblies();
 	}
-
-	EditorNode::add_init_callback(&_editor_init_callback);
-#endif
+#endif //TOOLS_ENABLED
 }
 
 void CSharpLanguage::finish() {
@@ -729,6 +740,10 @@ void CSharpLanguage::reload_tool_script(const Ref<Script> &p_script, bool p_soft
 
 #ifdef GD_MONO_HOT_RELOAD
 bool CSharpLanguage::is_assembly_reloading_needed() {
+#ifdef LIBRARY_ENABLED
+	return false; // TODO ?
+#else
+
 	ERR_FAIL_NULL_V(gdmono, false);
 	if (!gdmono->is_runtime_initialized()) {
 		return false;
@@ -757,9 +772,14 @@ bool CSharpLanguage::is_assembly_reloading_needed() {
 	}
 
 	return true;
+#endif
 }
 
 void CSharpLanguage::reload_assemblies(bool p_soft_reload) {
+#ifdef LIBRARY_ENABLED
+	// TODO ?
+#else
+
 	ERR_FAIL_NULL(gdmono);
 	if (!gdmono->is_runtime_initialized()) {
 		return;
@@ -1138,6 +1158,7 @@ void CSharpLanguage::reload_assemblies(bool p_soft_reload) {
 		NodeDock::get_singleton()->update_lists();
 	}
 #endif
+#endif // LIBRARY_ENABLED
 }
 #endif
 
@@ -1187,9 +1208,14 @@ void CSharpLanguage::_editor_init_callback() {
 	int32_t interop_funcs_size = 0;
 	const void **interop_funcs = godotsharp::get_editor_interop_funcs(interop_funcs_size);
 
+#ifdef LIBRARY_ENABLED
+	Object *editor_plugin_obj = GDMono::get_singleton()->get_plugin_callbacks().GetEditorPluginCallback(
+			interop_funcs, interop_funcs_size);
+#else
 	Object *editor_plugin_obj = GDMono::get_singleton()->get_plugin_callbacks().LoadToolsAssemblyCallback(
 			GodotSharpDirs::get_data_editor_tools_dir().path_join("GodotTools.dll").utf16(),
 			interop_funcs, interop_funcs_size);
+#endif
 	CRASH_COND(editor_plugin_obj == nullptr);
 
 	EditorPlugin *godotsharp_editor = Object::cast_to<EditorPlugin>(editor_plugin_obj);

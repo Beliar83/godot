@@ -1,6 +1,7 @@
 # Prior to .NET Core, we supported these: ["windows", "macos", "linuxbsd", "android", "haiku", "web", "ios"]
 # Eventually support for each them should be added back (except Haiku if not supported by .NET Core)
 supported_platforms = ["windows", "macos", "linuxbsd"]
+supported_library_platforms = ["windows", "macos", "linuxbsd", "android", "ios"]
 
 
 def can_build(env, platform):
@@ -16,6 +17,8 @@ def can_build(env, platform):
 def configure(env):
     platform = env["platform"]
 
+    if env["library_type"] in ["static_library", "shared_library"]:
+        supported_platforms = supported_library_platforms
     if platform not in supported_platforms:
         raise RuntimeError("This module does not currently support building for this platform")
 
