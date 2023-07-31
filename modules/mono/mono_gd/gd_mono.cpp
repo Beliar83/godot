@@ -461,7 +461,6 @@ void GDMono::initialize_load_assemblies() {
 			print_error(".NET: Failed to load project assembly");
 		}
 	}
-}
 #endif
 }
 #endif
@@ -535,7 +534,7 @@ Error GDMono::reload_project_assemblies() {
 
 	// Load the project's main assembly. Here, during hot-reloading, we do
 	// consider failing to load the project's main assembly to be an error.
-#ifdef TOOLS_ENABLED
+#if defined(TOOLS_ENABLED) && defined(LIBRARY_ENABLED)
 	if (!get_plugin_callbacks().LoadScriptAssembliesCallback()) {
 		ERR_PRINT_ED(".NET: Failed to load script assemblies.");
 		reload_failure();

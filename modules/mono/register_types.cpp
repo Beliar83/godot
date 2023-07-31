@@ -59,7 +59,7 @@ void initialize_mono_module(ModuleInitializationLevel p_level) {
 	Engine::get_singleton()->add_singleton(Engine::Singleton("GodotSharp", mono_bind::GodotSharp::get_singleton()));
 
 #ifndef LIBRARY_ENABLED
-	initialize_language();
+	initialize_csharp_language();
 #endif
 	resource_loader_cs.instantiate();
 	ResourceLoader::add_resource_format_loader(resource_loader_cs);

@@ -18,8 +18,10 @@ def configure(env):
     platform = env["platform"]
 
     if env["library_type"] in ["static_library", "shared_library"]:
-        supported_platforms = supported_library_platforms
-    if platform not in supported_platforms:
+        _supported_platforms = supported_library_platforms
+    else:
+        _supported_platforms = supported_platforms
+    if platform not in _supported_platforms:
         raise RuntimeError("This module does not currently support building for this platform")
 
     env.add_module_version_string("mono")
