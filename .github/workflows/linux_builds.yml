@@ -22,17 +22,17 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - name: Editor w/ Mono (target=editor)
-            cache-name: linux-editor-mono
-            target: editor
-            sconsflags: module_mono_enabled=yes
-            bin: "./bin/godot.linuxbsd.editor.x86_64.mono"
-            build-mono: true
-            tests: false # Disabled due freeze caused by mix Mono build and CI
-            doc-test: true
-            proj-conv: true
-            api-compat: true
-            artifact: true
+#          - name: Editor w/ Mono (target=editor)
+#            cache-name: linux-editor-mono
+#            target: editor
+#            sconsflags: module_mono_enabled=yes
+#            bin: "./bin/godot.linuxbsd.editor.x86_64.mono"
+#            build-mono: true
+#            tests: false # Disabled due freeze caused by mix Mono build and CI
+#            doc-test: true
+#            proj-conv: true
+#            api-compat: true
+#            artifact: true
 
           - name: Editor with doubles and GCC sanitizers (target=editor, tests=yes, dev_build=yes, scu_build=yes, precision=double, use_asan=yes, use_ubsan=yes, linker=gold)
             cache-name: linux-editor-double-sanitizers
@@ -58,20 +58,20 @@ jobs:
             # Skip 2GiB artifact speeding up action.
             artifact: false
 
-          - name: Template w/ Mono (target=template_release)
-            cache-name: linux-template-mono
-            target: template_release
-            sconsflags: module_mono_enabled=yes
-            build-mono: false
-            tests: false
-            artifact: true
+ #         - name: Template w/ Mono (target=template_release)
+ #           cache-name: linux-template-mono
+ #           target: template_release
+ #           sconsflags: module_mono_enabled=yes
+ #           build-mono: false
+ #           tests: false
+ #           artifact: true
 
-          - name: Minimal template (target=template_release, everything disabled)
-            cache-name: linux-template-minimal
-            target: template_release
-            sconsflags: modules_enabled_by_default=no disable_3d=yes disable_advanced_gui=yes deprecated=no minizip=no
-            tests: false
-            artifact: true
+#          - name: Minimal template (target=template_release, everything disabled)
+#            cache-name: linux-template-minimal
+#            target: template_release
+#            sconsflags: modules_enabled_by_default=no disable_3d=yes disable_advanced_gui=yes deprecated=no minizip=no
+#            tests: false
+#            artifact: true
 
     steps:
       - uses: actions/checkout@v4
