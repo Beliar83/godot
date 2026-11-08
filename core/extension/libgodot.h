@@ -32,6 +32,22 @@
 
 #include "core/extension/gdextension_interface.gen.h"
 
+#include "modules/modules_enabled.gen.h"
+
+#ifdef MODULE_MONO_ENABLED
+namespace GDMonoCache {
+struct ManagedCallbacks;
+}
+#ifdef TOOLS_ENABLED
+namespace gdmono {
+struct PluginCallbacks;
+}
+using godot_plugins_initialize_fn = bool (*)(void *, bool, gdmono::PluginCallbacks *, GDMonoCache::ManagedCallbacks *, const void **, int32_t);
+#else
+using godot_plugins_initialize_fn = bool (*)(void *, GDMonoCache::ManagedCallbacks *, const void **, int32_t);
+#endif
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif // __cplusplus
@@ -58,6 +74,10 @@ extern "C" {
  * @return A pointer to created \ref GodotInstance GDExtension object or nullptr if there was an error.
  */
 LIBGODOT_API GDExtensionObjectPtr libgodot_create_godot_instance(int p_argc, char *p_argv[], GDExtensionInitializationFunction p_init_func);
+
+#ifdef MODULE_MONO_ENABLED
+LIBGODOT_API GDExtensionObjectPtr libgodot_create_godot_instance_mono(int p_argc, char *p_argv[], godot_plugins_initialize_fn p_init_func);
+#endif
 
 /**
  * @name libgodot_destroy_godot_instance

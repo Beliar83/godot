@@ -37,6 +37,11 @@
 #include "main/main.h"
 #include "servers/display/display_server.h"
 
+#ifdef MODULE_MONO_ENABLED
+#include "modules/mono/csharp_script.h"
+#include "modules/mono/mono_gd/gd_mono.h"
+#endif
+
 void GodotInstance::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("start"), &GodotInstance::start);
 	ClassDB::bind_method(D_METHOD("is_started"), &GodotInstance::is_started);
@@ -60,7 +65,13 @@ bool GodotInstance::initialize(GDExtensionInitializationFunction p_init_func) {
 	GDExtensionManager::LoadStatus status = gdextension_manager->load_extension_from_function("libgodot://main", ptr);
 	return status == GDExtensionManager::LoadStatus::LOAD_STATUS_OK;
 }
-
+#ifdef MODULE_MONO_ENABLED
+void GodotInstance::initialize_mono(godot_plugins_initialize_fn p_init_func) {
+	const auto csharp_language = memnew(CSharpLanguage);
+	csharp_language->init();
+	GDMono::get_singleton()->initialize(p_init_func);
+}
+#endif
 bool GodotInstance::start() {
 	print_verbose("GodotInstance::start()");
 	Error err = Main::setup2();

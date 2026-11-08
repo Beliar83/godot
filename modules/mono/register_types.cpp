@@ -52,7 +52,11 @@ void initialize_mono_module(ModuleInitializationLevel p_level) {
 
 	_godotsharp = memnew(MonoBind::GodotSharp);
 
-	script_language_cs = memnew(CSharpLanguage);
+	script_language_cs = CSharpLanguage::get_singleton();
+	if (script_language_cs == nullptr) {
+		script_language_cs = memnew(CSharpLanguage);
+	}
+
 	script_language_cs->set_language_index(ScriptServer::get_language_count());
 	ScriptServer::register_language(script_language_cs);
 

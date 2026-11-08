@@ -58,6 +58,16 @@ struct PluginCallbacks {
 
 } // namespace gdmono
 
+namespace GDMonoCache {
+struct ManagedCallbacks;
+}
+
+#ifdef TOOLS_ENABLED
+using godot_plugins_initialize_fn = bool (*)(void *, bool, gdmono::PluginCallbacks *, GDMonoCache::ManagedCallbacks *, const void **, int32_t);
+#else
+using godot_plugins_initialize_fn = bool (*)(void *, GDMonoCache::ManagedCallbacks *, const void **, int32_t);
+#endif
+
 class GDMono {
 	bool initialized = false;
 	bool runtime_initialized = false;
@@ -146,7 +156,7 @@ public:
 
 	bool should_initialize();
 
-	void initialize();
+	void initialize(godot_plugins_initialize_fn godot_plugins_initialize = nullptr);
 
 	GDMono();
 	~GDMono();

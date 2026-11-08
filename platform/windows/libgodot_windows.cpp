@@ -58,6 +58,24 @@ GDExtensionObjectPtr libgodot_create_godot_instance(int p_argc, char *p_argv[], 
 	return (GDExtensionObjectPtr)instance;
 }
 
+#ifdef MODULE_MONO_ENABLED
+GDExtensionObjectPtr libgodot_create_godot_instance_mono(int p_argc, char *p_argv[], godot_plugins_initialize_fn p_init_func) {
+	ERR_FAIL_COND_V_MSG(instance != nullptr, nullptr, "Only one Godot Instance may be created at a time.");
+
+	os = new OS_Windows(GetModuleHandle(nullptr));
+
+	Error err = Main::setup(p_argv[0], p_argc - 1, &p_argv[1], false);
+	if (err != OK) {
+		return nullptr;
+	}
+
+	instance = memnew(GodotInstance);
+	instance->initialize_mono(p_init_func);
+
+	return (GDExtensionObjectPtr)instance;
+}
+#endif
+
 void libgodot_destroy_godot_instance(GDExtensionObjectPtr p_godot_instance) {
 	GodotInstance *godot_instance = (GodotInstance *)p_godot_instance;
 	if (instance == godot_instance) {

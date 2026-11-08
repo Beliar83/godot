@@ -423,12 +423,6 @@ load_assembly_and_get_function_pointer_fn initialize_hostfxr_self_contained(
 #endif
 
 #ifdef TOOLS_ENABLED
-using godot_plugins_initialize_fn = bool (*)(void *, bool, gdmono::PluginCallbacks *, GDMonoCache::ManagedCallbacks *, const void **, int32_t);
-#else
-using godot_plugins_initialize_fn = bool (*)(void *, GDMonoCache::ManagedCallbacks *, const void **, int32_t);
-#endif
-
-#ifdef TOOLS_ENABLED
 godot_plugins_initialize_fn initialize_hostfxr_and_godot_plugins(bool &r_runtime_initialized) {
 	godot_plugins_initialize_fn godot_plugins_initialize = nullptr;
 
@@ -636,47 +630,45 @@ static bool _on_core_api_assembly_loaded() {
 	return true;
 }
 
-void GDMono::initialize() {
+void GDMono::initialize(godot_plugins_initialize_fn godot_plugins_initialize) {
 	print_verbose(".NET: Initializing module...");
 
 	_init_godot_api_hashes();
 
-	godot_plugins_initialize_fn godot_plugins_initialize = nullptr;
-
+	if (godot_plugins_initialize == nullptr) {
 #if !defined(APPLE_EMBEDDED_ENABLED)
-	// Check that the .NET assemblies directory exists before trying to use it.
-	if (!DirAccess::exists(GodotSharpDirs::get_api_assemblies_dir())) {
-		OS::get_singleton()->alert(vformat(RTR("Unable to find the .NET assemblies directory.\nMake sure the '%s' directory exists and contains the .NET assemblies."), GodotSharpDirs::get_api_assemblies_dir()), RTR(".NET assemblies not found"));
-		ERR_FAIL_MSG(".NET: Assemblies not found");
-	}
+		// Check that the .NET assemblies directory exists before trying to use it.
+		if (!DirAccess::exists(GodotSharpDirs::get_api_assemblies_dir())) {
+			OS::get_singleton()->alert(vformat(RTR("Unable to find the .NET assemblies directory.\nMake sure the '%s' directory exists and contains the .NET assemblies."), GodotSharpDirs::get_api_assemblies_dir()), RTR(".NET assemblies not found"));
+			ERR_FAIL_MSG(".NET: Assemblies not found");
+		}
 #endif
-
-	if (load_hostfxr(hostfxr_dll_handle)) {
-		godot_plugins_initialize = initialize_hostfxr_and_godot_plugins(runtime_initialized);
-		ERR_FAIL_NULL(godot_plugins_initialize);
-	} else {
-#if !defined(TOOLS_ENABLED)
-		if (load_coreclr(coreclr_dll_handle)) {
-			godot_plugins_initialize = initialize_coreclr_and_godot_plugins(runtime_initialized);
+		if (load_hostfxr(hostfxr_dll_handle)) {
+			godot_plugins_initialize = initialize_hostfxr_and_godot_plugins(runtime_initialized);
+			ERR_FAIL_NULL(godot_plugins_initialize);
 		} else {
-			void *dll_handle = nullptr;
-			godot_plugins_initialize = try_load_native_aot_library(dll_handle);
-			if (godot_plugins_initialize != nullptr) {
-				runtime_initialized = true;
+#if !defined(TOOLS_ENABLED)
+			if (load_coreclr(coreclr_dll_handle)) {
+				godot_plugins_initialize = initialize_coreclr_and_godot_plugins(runtime_initialized);
+			} else {
+				void *dll_handle = nullptr;
+				godot_plugins_initialize = try_load_native_aot_library(dll_handle);
+				if (godot_plugins_initialize != nullptr) {
+					runtime_initialized = true;
+				}
 			}
-		}
 
-		if (godot_plugins_initialize == nullptr) {
-			ERR_FAIL_MSG(".NET: Failed to load hostfxr");
-		}
+			if (godot_plugins_initialize == nullptr) {
+				ERR_FAIL_MSG(".NET: Failed to load hostfxr");
+			}
 #else
 
-		// Show a message box to the user to make the problem explicit (and explain a potential crash).
-		OS::get_singleton()->alert(TTR("Unable to load .NET runtime, specifically hostfxr.\nAttempting to create/edit a project will lead to a crash.\n\nPlease install the .NET SDK 8.0 or later from https://get.dot.net and restart Godot."), TTR("Failed to load .NET runtime"));
-		ERR_FAIL_MSG(".NET: Failed to load hostfxr");
+			// Show a message box to the user to make the problem explicit (and explain a potential crash).
+			OS::get_singleton()->alert(TTR("Unable to load .NET runtime, specifically hostfxr.\nAttempting to create/edit a project will lead to a crash.\n\nPlease install the .NET SDK 8.0 or later from https://get.dot.net and restart Godot."), TTR("Failed to load .NET runtime"));
+			ERR_FAIL_MSG(".NET: Failed to load hostfxr");
 #endif
+		}
 	}
-
 	int32_t interop_funcs_size = 0;
 	const void **interop_funcs = godotsharp::get_runtime_interop_funcs(interop_funcs_size);
 

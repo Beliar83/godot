@@ -33,6 +33,22 @@
 #include "core/extension/gdextension_interface.gen.h"
 #include "core/object/object.h"
 
+#include "modules/modules_enabled.gen.h"
+
+#ifdef MODULE_MONO_ENABLED
+namespace GDMonoCache {
+struct ManagedCallbacks;
+}
+#ifdef TOOLS_ENABLED
+namespace gdmono {
+struct PluginCallbacks;
+}
+using godot_plugins_initialize_fn = bool (*)(void *, bool, gdmono::PluginCallbacks *, GDMonoCache::ManagedCallbacks *, const void **, int32_t);
+#else
+using godot_plugins_initialize_fn = bool (*)(void *, GDMonoCache::ManagedCallbacks *, const void **, int32_t);
+#endif
+#endif
+
 class GodotInstance : public Object {
 	GDCLASS(GodotInstance, Object);
 
@@ -46,6 +62,9 @@ public:
 	~GodotInstance();
 
 	bool initialize(GDExtensionInitializationFunction p_init_func);
+#ifdef MODULE_MONO_ENABLED
+	void initialize_mono(godot_plugins_initialize_fn p_init_func);
+#endif
 
 	bool start();
 	bool is_started();
